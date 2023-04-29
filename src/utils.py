@@ -2,28 +2,43 @@ from src.hh_sj_classes import HeadHunterAPI, SuperJobAPI, Vacancy, JSONSaver
 
 
 def user_interaction():
-    hh_api = HeadHunterAPI()
-    sj_api = SuperJobAPI()
+    print("Добро пожаловать! Выберите платформу для поиска вакансий:")
+    print("1. HeadHunter")
+    print("2. SuperJob")
+    platform_choice = input("Введите номер платформы: ")
 
-    search_query = input("Введите поисковое слово: ")
-    num_vacancies = int(input("Введите количество вакансий: "))
-    sort_by = input("Введите 'asc' для сортировки по возрастанию зарплаты, 'desc' для сортировки по убыванию: ")
+    if platform_choice == "1":
+        platform = {"hh": HeadHunterAPI()}
+    elif platform_choice == "2":
+        platform = {"sj": SuperJobAPI()}
+    else:
+        print("Выбрана некорректная платформа.")
+        return
 
-    hh_vacancies = hh_api.get_vacancies(search_query)
-    hh_vacancies = [Vacancy(v["name"], v["alternate_url"], v.get("salary", ""), v.get("description", "")) for v in
-                    hh_vacancies]
+    search_query = input("Введите запрос для поиска вакансий: ")
+    num_vacancies = input("Введите количество вакансий для вывода в топ: ")
+    try:
+        num_vacancies = int(num_vacancies)
+    except ValueError:
+        print("Некорректное значение количества вакансий.")
+        return
 
-    sj_vacancies = sj_api.get_vacancies(search_query)
-    sj_vacancies = [Vacancy(v["profession"], v.get("href", ""),
-                            str(v.get("payment_from", "")) + "-" + str(v.get("payment_to", "")) + " руб./мес.",
-                            v["description"], "SuperJob") for v in sj_api.get_vacancies(search_query) if "href" in v]
+    keywords = input("Введите ключевые слова для фильтрации вакансий (если нужно): ")
+    if keywords.strip():
+        keywords = keywords.split(",")
+    else:
+        keywords = None
 
-    if sort_by == "asc":
-        vacancies = sorted(vacancies, key=lambda x: int(getattr(x, "salary", "").split("-")[0].replace(" ", ""))
-        if getattr(x, "salary", None) and "руб." in getattr(x, "salary", "") else float('inf'))
-    elif sort_by == "desc":
-        vacancies = sorted(vacancies, key=lambda x: int(getattr(x, "salary", "").split("-")[0].replace(" ", ""))
-        if getattr(x, "salary", None) and "руб." in getattr(x, "salary", "") else float('-inf'), reverse=True)
-
-    for v in vacancies[:num_vacancies]:
-        print(f"{v.title}\n{v.url}\n{v.salary}\n{v.description}\n")
+    for platform_name, platform_instance in platform.items():
+        print(f"\nРезультаты поиска на {platform_name}:")
+        vacancies = platform_instance.get_vacancies(search_query)
+        if keywords:
+            vacancies = [vacancy for vacancy in vacancies if
+                         all(keyword.lower() in vacancy.description.lower() for keyword in keywords)]
+        vacancies = sorted(vacancies, key=lambda v: v.salary, reverse=True)[:num_vacancies]
+        for vacancy in vacancies:
+            print(f"Название вакансии: {vacancy.title}")
+            print(f"Зарплата: {vacancy.salary}")
+            print(f"Ссылка на вакансию: {vacancy.url}")
+            print(f"Описание: {vacancy.description}")
+            print("--------------------")
