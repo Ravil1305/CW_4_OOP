@@ -1,7 +1,12 @@
-from src.classes import HeadHunterAPI, SuperJobAPI, JSONSaver, Vacancy
+from src.classes import HeadHunterAPI, SuperJobAPI, JSONSaver
 
 
 def user_interaction():
+    """
+    Функция для взаимодействия с пользователем.
+    Получает выбор платформы, запрашивает поисковый запрос,
+    фильтрует вакансии по ключевым словам и зарплате и выводит топ N результат.
+    """
     hh_api, sj_api = choice_platform()
     hh_vacancies, sj_vacancies = get_from_platform(hh_api, sj_api)
     filter_word_input = filter_words()
@@ -10,6 +15,11 @@ def user_interaction():
 
 
 def choice_platform():
+    """
+    Функция для выбора платформы.
+    Предлагает пользователю выбрать платформу (HeadHunter.ru или Superjob.ru)
+    и возвращает соответствующий API.
+    """
     while True:
         platform_ = input("Выберите платформу (HeadHunter.ru - 1, Superjob.ru - 2): ")
         if platform_ == '1':
@@ -26,6 +36,11 @@ def choice_platform():
 
 
 def get_from_platform(hh_api, sj_api):
+    """
+    Функция для получения списка вакансий с выбранной платформы.
+    Принимает API для HeadHunter.ru и Superjob.ru и запрашивает
+    список вакансий с выбранной платформы по поисковому запросу.
+    """
     try:
         search_query = input("Введите поисковый запрос: ")
         if hh_api:
@@ -39,11 +54,19 @@ def get_from_platform(hh_api, sj_api):
 
 
 def filter_words():
+    """
+    Функция для получения ключевых слов для фильтрации вакансий.
+    Запрашивает у пользователя ключевые слова для фильтрации вакансий в описании.
+    """
     user_input = input("Введите ключевые слова для фильтрации вакансий в описании: ")
     return user_input
 
 
 def salary_sort():
+    """
+    Функция для получения минимальной зарплаты для поиска вакансий.
+    Запрашивает у пользователя минимальную зарплату для поиска вакансий.
+    """
     while True:
         salary_min = input("Введите минимальную зарплату для поиска (в рублях): ")
         if not salary_min.strip():
@@ -58,6 +81,7 @@ def salary_sort():
 
 
 def print_top_vacancies(final):
+    """Функция для вывода в топ N найденных вакансий."""
     top_n = int(input("Введите количество вакансий для вывода в топ N: "))
     if len(final) > 0:
         for n in range(top_n):
@@ -75,6 +99,7 @@ def print_top_vacancies(final):
 
 
 def get_result(hh_vacancies, sj_vacancies, filter_word_input, salary_input):
+    """Функция для получения результата поиска вакансий"""
     json_saver = JSONSaver()
     json_saver.save_in_file(headhunter=hh_vacancies, superjob=sj_vacancies)
     json_saver.search_words(filter_word_input)

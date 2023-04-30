@@ -7,10 +7,14 @@ from src.vacancy_class import Vacancy
 
 
 class HeadHunterAPI(Engine):
+    """ Класс для работы с API HeadHunter."""
+
     def __init__(self):
+        """ Конструктор класса HeadHunterAPI."""
         self.url_hh = "https://api.hh.ru/vacancies"
 
     def get_vacancies(self, search_query):
+        """Получает список вакансий, соответствующих запросу."""
         params = {
             'text': search_query,
             'per_page': 100,
@@ -33,6 +37,7 @@ class HeadHunterAPI(Engine):
             return f'Error: {response.status_code}'
 
     def get_salary(salary_data, **kwargs):
+        """Возвращает информацию о зарплате в виде словаря."""
         if salary_data is None:
             salary = {'from': 0, 'currency': 'RUR'}
         elif 'to' not in salary_data or salary_data['to'] is None:
@@ -46,13 +51,20 @@ class HeadHunterAPI(Engine):
 
 
 class SuperJobAPI(Engine):
+    """Класс для работы с API SuperJob."""
     __slots__ = ("api_key", "headers", "url")
+
     def __init__(self):
+        """
+        Конструктор класса SuperJobAPI.
+        Инициализирует атрибуты api_key, headers, url.
+        """
         self.api_key = os.getenv('SJ_API_KEY')
         self.headers = {'X-Api-App-Id': self.api_key}
         self.url = "https://api.superjob.ru/2.0/vacancies/"
 
     def get_vacancies(self, search_query):
+        """Получает список вакансий, соответствующих запросу."""
         params = {
             'keyword': search_query,
             'count': 100,
@@ -74,18 +86,20 @@ class SuperJobAPI(Engine):
         else:
             return f'Error: {response.status_code}'
 
-    def get_salary(vacancy, **kwargs):
-        if vacancy.get('payment_to') == 0:
-            salary = {'from': vacancy['payment_from'], 'currency': vacancy['currency']}
-        elif vacancy.get('payment_from') == 0:
-            salary = {'from': vacancy['payment_to'], 'currency': vacancy['currency']}
+    def get_salary(salary_data, **kwargs):
+        """Возвращает словарь с информацией о зарплате вакансии."""
+        if salary_data.get('payment_to') == 0:
+            salary = {'from': salary_data['payment_from'], 'currency': salary_data['currency']}
+        elif salary_data.get('payment_from') == 0:
+            salary = {'from': salary_data['payment_to'], 'currency': salary_data['currency']}
         else:
-            salary = {'from': vacancy.get('payment_from', 0), 'to': vacancy.get('payment_to', 0),
-                      'currency': vacancy.get('currency', 'rub')}
+            salary = {'from': salary_data.get('payment_from', 0), 'to': salary_data.get('payment_to', 0),
+                      'currency': salary_data.get('currency', 'rub')}
         return salary
 
 
 class JSONSaver:
+    """Класс для сохранения вакансий в формате JSON и их последующего поиска по зарплате и описанию."""
     def __init__(self):
         self.__file_name = 'FILE.json'
 
@@ -94,6 +108,7 @@ class JSONSaver:
         return self.__filename
 
     def save_in_file(self, headhunter=None, superjob=None):
+        """Сохраняет вакансии в формате JSON в файл."""
         if headhunter is not None and superjob is None:
             with open(self.__file_name, 'w', encoding='utf-8') as file:
                 json.dump(
@@ -114,6 +129,7 @@ class JSONSaver:
             print('Нет вакансий для сохранения')
 
     def get_vacancies_by_salary(self, salary_input):
+        """Возвращает вакансии, удовлетворяющие заданным критериям по зарплате."""
         with open(self.__file_name, 'r', encoding='utf-8') as file:
             vacancy = json.load(file)
         test_dict = []
@@ -143,6 +159,7 @@ class JSONSaver:
             json.dump(test_dict, file, ensure_ascii=False, indent=4)
 
     def search_words(self, search_words):
+        """Возвращает вакансии, содержащие в описании заданные слова."""
         if not isinstance(search_words, str):
             return "Error: запрос должен быть строкой"
         if search_words == '':
@@ -161,6 +178,7 @@ class JSONSaver:
             return result
 
     def json_results(self):
+        """Возвращает список вакансий, сохраненных в формате JSON."""
         with open(self.__file_name, 'r', encoding='utf-8') as file:
             final_result = json.load(file)
         return final_result
